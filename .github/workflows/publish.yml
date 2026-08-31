@@ -1,10 +1,19 @@
 name: Publish to npm
 
-# Publishing happens here rather than from a laptop because n8n requires it.
-# From 1 May 2026 a node submitted for verification must be published by GitHub
-# Actions with a provenance statement, and provenance is what proves the package
-# on npm was built from this commit in this repository. That is also why this
-# repository has to be public: an attestation nobody can check is worth nothing.
+# Publishing happens here rather than from a laptop for two reasons.
+#
+# n8n requires it: from 1 May 2026, a node submitted for verification must be
+# published by GitHub Actions with a provenance statement. Provenance is a signed
+# claim that the tarball on npm was built from a named commit in a named public
+# repository, which is also why this repository is public. An attestation nobody
+# can check is worth nothing.
+#
+# And there is no token anywhere in here. This uses npm trusted publishing, where
+# the registry trusts this specific repository and this specific workflow file
+# through OIDC, and npm mints a short lived credential for the one publish. A
+# long lived automation token would sit in repository secrets forever and would
+# publish from anywhere it leaked to. This cannot be stolen because it does not
+# exist between runs. See PUBLISHING.md for the one time setup on npmjs.com.
 on:
   release:
     types: [published]
@@ -12,20 +21,32 @@ on:
 
 permissions:
   contents: read
-  # Required for npm provenance. Without it the publish succeeds but produces no
-  # attestation, which is the whole point of publishing this way.
+  # Required for OIDC. Without it npm has no identity to verify and the publish
+  # is rejected, which is the failure to look for first if this ever breaks.
   id-token: write
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      # Action and Node versions follow npm's own documented example for trusted
+      # publishing rather than being chosen here.
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+
+      # Trusted publishing needs npm 11.5.1 or later. Node 24 ships something
+      # recent enough most of the time, and "most of the time" is not a thing to
+      # rely on for a release, so it is pinned forward explicitly and printed.
+      - name: Use an npm that can do trusted publishing
+        run: |
+          npm install -g npm@latest
+          node -v
+          npm -v
 
       - run: npm ci
 
@@ -41,7 +62,8 @@ jobs:
           test -f dist/nodes/SilentFail/silentFail.svg
           test -f dist/credentials/SilentFailMonitor.credentials.js
 
+      # No --provenance flag and no NODE_AUTH_TOKEN. Trusted publishing generates
+      # the provenance statement on its own, and passing a token here would be
+      # the thing this setup exists to avoid.
       - name: Publish
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public

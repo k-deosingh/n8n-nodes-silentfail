@@ -1,74 +1,100 @@
 # Publishing and submitting this package
 
-Nothing here has been published. The name `n8n-nodes-silentfail` is unclaimed on
-npm as far as this repository is concerned, and no release has been cut. The steps
+Nothing here has been published. No release has been cut and the name
+`n8n-nodes-silentfail` is unclaimed as far as this repository knows. The steps
 below are the ones only you can do, because they need accounts.
 
-## Why it has to go out through GitHub Actions
+**You do not need an npm access token.** npm is right to warn you off one for
+CI, and the workflow in `.github/workflows/publish.yml` does not use one. It uses
+trusted publishing instead.
 
-n8n's verification rules say that from 1 May 2026, a node submitted for
-verification must be published using GitHub Actions with a provenance statement.
-Provenance is a signed claim that the tarball on npm was built from a specific
-commit in a specific repository, and npm generates it from the identity token
-that Actions hands the job. That is why `.github/workflows/publish.yml` exists
-and why publishing from a laptop is not an option any more.
+## What trusted publishing is, in one paragraph
 
-It also means the repository has to be public. An attestation that points at a
-repository nobody can read proves nothing, so npm will not display it.
+You tell npm, once, that this exact repository and this exact workflow file are
+allowed to publish this package. When the workflow runs, GitHub hands it a short
+lived signed statement of who it is, npm checks that against what you configured,
+and issues a credential good for that one publish. Nothing long lived is stored
+anywhere. An automation token, by contrast, sits in repository secrets forever
+and can publish from anywhere it leaks to, which is exactly what the warning you
+saw is about. Trusted publishing also generates the provenance statement
+automatically, which n8n requires for verification from 1 May 2026, so this is
+the route that satisfies both concerns at once.
 
-That is the only reason this needs to be open source. The node itself is about
-sixty lines of HTTP request, and the app it talks to stays private.
+## The one wrinkle
 
-## What you need to do
+npm configures a trusted publisher on a **package's** settings page, and a
+package that has never been published has no settings page. npm's own
+documentation does not say either way whether a brand new name can be configured
+in advance, so the order below claims the name first without ever creating a
+token. If npm does let you add a trusted publisher for a name that does not exist
+yet, skip step 2 and go straight to step 3.
 
-1. **npm account.** Create one for contact@silentfailapp.com and turn on
-   two factor authentication. Then create a **granular access token** with
-   publish permission. Use an automation token, because a classic token with 2FA
-   enforced will prompt for a one time code and the CI job has nobody to ask.
+## Steps
 
-2. **Public GitHub repository.** Create `k-deosingh/n8n-nodes-silentfail` and
-   make it public. If you name it anything else, change `repository.url` in
-   `package.json` to match. A mismatch is not cosmetic: provenance ties the
-   package to that URL, and the publish step fails outright if it disagrees.
+1. **npm account.** Create one for contact@silentfailapp.com and turn on two
+   factor authentication. Then, on your own machine, run `npm login` from
+   anywhere. That is a browser login, not a token, so the warning you saw does
+   not apply to it.
 
-3. **Copy this directory into it.** Everything here, including
-   `package-lock.json`, because the workflow runs `npm ci` and that needs the
-   lockfile. `dist` stays out, the workflow builds it.
+2. **Claim the name with one manual publish.** From this directory:
 
-4. **Add the token as a repository secret** named `NPM_TOKEN`, under Settings,
-   Secrets and variables, Actions.
+       npm install
+       npm publish --access public
 
-5. **Cut a release.** The workflow runs on a published GitHub release, and can
-   also be triggered by hand from the Actions tab. It typechecks, builds, asserts
-   the three files `package.json` promises actually exist, then runs
-   `npm publish --provenance --access public`.
+   `prepublishOnly` builds `dist` for you, so there is no way to publish a stale
+   or missing build. This version will have no provenance statement, which is
+   expected and fine, because it exists to create the package so that step 3
+   becomes possible. Do not submit this version to n8n.
 
-6. **Check it landed.** `npm view n8n-nodes-silentfail` should show version
-   0.1.0, and the package page on npm should show a provenance section naming the
-   commit it was built from. If provenance is missing, the `id-token: write`
-   permission was dropped somewhere.
+3. **Configure trusted publishing.** On npmjs.com, open the package, go to
+   Settings, and add a trusted publisher with:
 
-7. **Submit for verification.** Sign in at creators.n8n.io and submit the node
-   there. The same portal is where workflow templates are shared, so the template
-   goes in at the same time.
+   - Publisher: GitHub Actions
+   - Organization or user: `k-deosingh`
+   - Repository: `n8n-nodes-silentfail`
+   - Workflow filename: `publish.yml` (filename only, not a path)
+   - Environment: leave empty
+   - Allowed actions: `npm publish`
 
-   Two things their guidelines ask for that are worth knowing before you submit:
-   they want no runtime dependencies, which this package satisfies because
-   `n8n-workflow` is only a peer and dev dependency and there is no `dependencies`
-   block at all; and they strongly suggest scaffolding with their `n8n-node` CLI.
-   This package was written by hand to the same structure rather than generated,
-   so if a reviewer objects to anything it will be a convention rather than a
+   These have to match the real repository and filename exactly. A mismatch is
+   the most common reason a trusted publish is rejected, and the error names the
+   mismatch, so read it rather than guessing.
+
+4. **Bump the version.** npm refuses to republish a version that already exists,
+   so change `version` in `package.json` to `0.1.1` and commit it. Skipping this
+   makes the workflow fail on its very last step after doing all the work.
+
+5. **Release it.** Create a GitHub release, or trigger the workflow by hand from
+   the Actions tab. It typechecks, builds, asserts the three files
+   `package.json` promises actually exist, then publishes. No secret needs to be
+   set on the repository for any of this.
+
+6. **Check it landed.** `npm view n8n-nodes-silentfail` should show 0.1.1, and the
+   package page on npm should show a provenance section naming the commit it was
+   built from. If provenance is missing, the `id-token: write` permission was
+   dropped. If the publish itself was rejected, compare the repository and
+   workflow filename in the error against what you entered in step 3.
+
+7. **Submit for verification.** Sign in at creators.n8n.io and submit the node.
+   The same portal is where workflow templates are shared, so the template goes
+   in at the same time.
+
+   Two things from their guidelines worth knowing before you submit: they want no
+   runtime dependencies, which this package satisfies because `n8n-workflow` is
+   only a peer and dev dependency and there is no `dependencies` block at all;
+   and they strongly suggest scaffolding with their `n8n-node` CLI. This package
+   was written by hand to the same structure rather than generated, so if a
+   reviewer objects to anything it will be a convention rather than a
    requirement.
 
 8. **Submit the template.** Paste the contents of
    `templates/silent-fail-heartbeat.json`. It carries `PASTE_YOUR_MONITOR_TOKEN`
-   as the URL, not a real token, and it needs to stay that way.
+   as the URL rather than a real token, and it needs to stay that way.
 
-## Version bumps
+## Later releases
 
-The workflow publishes whatever version is in `package.json`. npm refuses to
-republish a version that already exists, so bump it before each release or the
-job fails on the last step after doing all the work.
+Bump the version, cut a release, done. Step 2 never happens again, and after
+step 3 every published version carries provenance.
 
 ## Trying it before any of that
 
@@ -118,5 +144,6 @@ Against n8n 2.36.9 in Docker, with the packed tarball installed into
 
 Not tested: the editor as a human sees it, meaning the palette entry, the icon
 rendering and the field layout were confirmed from the data the editor serves
-rather than by clicking through a browser. Also untested is anything to do with
-npm or n8n's verification, since neither has happened yet.
+rather than by clicking through a browser. Also untested is the publish itself,
+including the trusted publishing configuration, since none of that can be
+exercised before the account exists.
