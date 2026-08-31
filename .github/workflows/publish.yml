@@ -1,0 +1,47 @@
+name: Publish to npm
+
+# Publishing happens here rather than from a laptop because n8n requires it.
+# From 1 May 2026 a node submitted for verification must be published by GitHub
+# Actions with a provenance statement, and provenance is what proves the package
+# on npm was built from this commit in this repository. That is also why this
+# repository has to be public: an attestation nobody can check is worth nothing.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # Required for npm provenance. Without it the publish succeeds but produces no
+  # attestation, which is the whole point of publishing this way.
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Confirm the build produced what package.json promises
+        run: |
+          test -f dist/nodes/SilentFail/SilentFail.node.js
+          test -f dist/nodes/SilentFail/silentFail.svg
+          test -f dist/credentials/SilentFailMonitor.credentials.js
+
+      - name: Publish
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

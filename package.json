@@ -1,0 +1,53 @@
+{
+  "name": "n8n-nodes-silentfail",
+  "version": "0.1.0",
+  "description": "Tell Silent Fail your workflow finished, so you get an email when it stops",
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n",
+    "silentfail",
+    "monitoring",
+    "heartbeat",
+    "dead man's switch",
+    "cron monitoring"
+  ],
+  "license": "MIT",
+  "homepage": "https://silentfailapp.com",
+  "author": {
+    "name": "Silent Fail",
+    "email": "contact@silentfailapp.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/k-deosingh/n8n-nodes-silentfail.git"
+  },
+  "engines": {
+    "node": ">=20.15"
+  },
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc && node scripts/copy-icons.mjs",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/SilentFailMonitor.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/SilentFail/SilentFail.node.js"
+    ]
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "n8n-workflow": "*",
+    "typescript": "^5.7.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}

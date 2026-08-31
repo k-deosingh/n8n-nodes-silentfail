@@ -1,0 +1,10 @@
+# Only dist ships, which package.json "files" already enforces. This is here so
+# a stray build artefact or local env file cannot ride along if that changes.
+nodes
+credentials
+scripts
+templates
+tsconfig.json
+.github
+*.log
+.env*

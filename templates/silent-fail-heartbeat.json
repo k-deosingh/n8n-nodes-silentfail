@@ -1,0 +1,73 @@
+{
+  "name": "Know when this workflow stops running",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "7c1f6a2e-0001-4a11-9c01-000000000001",
+      "name": "Every hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-180, 0]
+    },
+    {
+      "parameters": {},
+      "id": "7c1f6a2e-0002-4a11-9c01-000000000002",
+      "name": "Your work goes here",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [60, 0]
+    },
+    {
+      "parameters": {
+        "url": "https://silentfailapp.com/api/ping/PASTE_YOUR_MONITOR_TOKEN",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "7c1f6a2e-0003-4a11-9c01-000000000003",
+      "name": "Tell Silent Fail it finished",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [300, 0],
+      "notesInFlow": true,
+      "notes": "Replace the URL with your own monitor ping URL from silentfailapp.com"
+    }
+  ],
+  "connections": {
+    "Every hour": {
+      "main": [
+        [
+          {
+            "node": "Your work goes here",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Your work goes here": {
+      "main": [
+        [
+          {
+            "node": "Tell Silent Fail it finished",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
