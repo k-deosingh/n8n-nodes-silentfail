@@ -1,0 +1,18 @@
+{
+	"node": "n8n-nodes-silentfail.silentFail",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Development", "Utility"],
+	"resources": {
+		"credentialDocumentation": [
+			{
+				"url": "https://github.com/k-deosingh/n8n-nodes-silentfail?tab=readme-ov-file#ping-url-or-credential"
+			}
+		],
+		"primaryDocumentation": [
+			{
+				"url": "https://github.com/k-deosingh/n8n-nodes-silentfail?tab=readme-ov-file"
+			}
+		]
+	}
+}

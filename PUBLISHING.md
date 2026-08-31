@@ -96,6 +96,27 @@ yet, skip step 2 and go straight to step 3.
 Bump the version, cut a release, done. Step 2 never happens again, and after
 step 3 every published version carries provenance.
 
+## Passing the submission scan
+
+n8n runs `npx @n8n/scan-community-package` against the published package and the
+public repository its provenance names. `npm run lint` here is the same eslint
+config that scan uses, so a green lint is the check that gates verification. Run
+it before every release.
+
+Two things worth knowing if you ever run that scan yourself:
+
+- On Windows it fails while extracting the source with a tar path error. That is
+  the tool, not the package. Run it under Linux or in a container.
+- Its credential rule walks up from the node file looking for package.json and
+  stops one directory short of the filesystem root, so a package checked out at
+  a first level path like /pkg reports "credential not defined in this package"
+  when it is defined. Check out somewhere deeper and it passes.
+
+The one remaining warning is `credential-unnecessary-password`, which says the
+`pingUrl` field does not look sensitive. It is: that URL is the whole of the
+authentication for a monitor. The scan only fails on errors, so the warning is
+left standing rather than fixed by removing the masking.
+
 ## Trying it before any of that
 
 The package does not need to be on npm to be installed. From this directory:

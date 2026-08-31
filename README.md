@@ -35,6 +35,8 @@ Both work. The difference matters if you share workflows.
 
 A URL typed into the node field travels inside the exported workflow JSON. Since that URL is the entire authentication, a workflow posted in a forum or committed to a repository hands it to whoever reads it. A credential is encrypted at rest and is left out of an export, so use one if the workflow will be shared.
 
+The credential is called **Silent Fail Monitor API** and holds one field, the ping URL. There is no API key to find, because there is no API key. Its Test button checks that the monitor exists without pinging it, so testing a credential never tells Silent Fail your workflow ran.
+
 ### Options
 
 **Method.** GET or POST. Silent Fail treats them identically. GET is the simpler default. Use POST if something between you and us blocks or caches GET requests.
@@ -70,6 +72,17 @@ Email only. One email when a monitor goes down, nothing more until it recovers, 
 ## Without this node
 
 The node is a convenience. A plain **HTTP Request** node pointed at the same URL does exactly the same thing, and there is a ready made workflow that does it that way in the `templates` directory of the [repository](https://github.com/k-deosingh/n8n-nodes-silentfail), which is not shipped inside this package. Use whichever you prefer.
+
+## Working on this node
+
+```bash
+npm install
+npm run lint      # n8n's own eslint config for community nodes
+npm run build
+npm run dev       # runs n8n locally with this node loaded
+```
+
+`npm run lint` is the same check that gates n8n's verification, so keep it green.
 
 ## Licence
 

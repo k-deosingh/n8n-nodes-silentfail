@@ -50,7 +50,10 @@ jobs:
 
       - run: npm ci
 
-      - name: Typecheck
+      # n8n-node lint, which is n8n's own eslint config for community nodes. It
+      # is what their submission scanner runs, so a green run here is the same
+      # check that gates verification.
+      - name: Lint
         run: npm run lint
 
       - name: Build
@@ -60,7 +63,7 @@ jobs:
         run: |
           test -f dist/nodes/SilentFail/SilentFail.node.js
           test -f dist/nodes/SilentFail/silentFail.svg
-          test -f dist/credentials/SilentFailMonitor.credentials.js
+          test -f dist/credentials/SilentFailMonitorApi.credentials.js
 
       # No --provenance flag and no NODE_AUTH_TOKEN. Trusted publishing generates
       # the provenance statement on its own, and passing a token here would be

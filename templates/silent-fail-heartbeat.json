@@ -3,6 +3,31 @@
   "nodes": [
     {
       "parameters": {
+        "content": "## Know when this workflow stops running\n\n### How it works\n\n1. A schedule trigger starts this workflow every hour.\n2. Your own steps run in place of the placeholder node.\n3. The last node calls a Silent Fail ping URL to report that the run finished.\n4. Silent Fail expects that call on a schedule, and emails you when it stops arriving.\n\nThis catches the one failure an error handler cannot. A workflow that stops running produces no error, so nothing tells you it stopped. A deactivated schedule, an expired credential, an instance that went down: all silent.\n\n### Setup steps\n\n- [ ] Create a monitor at [silentfailapp.com](https://silentfailapp.com) and copy its ping URL. No credentials are needed anywhere in this workflow.\n- [ ] Open the \"Ping Silent Fail\" node and replace PASTE_YOUR_MONITOR_TOKEN in the URL with your own monitor token.\n- [ ] Set the monitor's expected interval in Silent Fail to match this schedule, hourly by default.\n- [ ] Replace the placeholder node with the work you want watched, then activate the workflow.\n\n### Customization\n\nChange the schedule to match how often your job should run. Move the ping to sit only on the branch you care about, and Silent Fail will report only that branch as alive. Widen the grace period in Silent Fail if your run duration varies a lot.",
+        "height": 660,
+        "width": 480
+      },
+      "id": "7c1f6a2e-0000-4a11-9c01-000000000000",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-784, -128]
+    },
+    {
+      "parameters": {
+        "content": "## Run the work, then check in\n\nRuns on a schedule, does the work, and reports completion to Silent Fail as the last step.",
+        "height": 304,
+        "width": 672,
+        "color": 7
+      },
+      "id": "7c1f6a2e-0004-4a11-9c01-000000000004",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-224, -128]
+    },
+    {
+      "parameters": {
         "rule": {
           "interval": [
             {
@@ -13,7 +38,7 @@
         }
       },
       "id": "7c1f6a2e-0001-4a11-9c01-000000000001",
-      "name": "Every hour",
+      "name": "When Every Hour Passes",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [-180, 0]
@@ -21,7 +46,7 @@
     {
       "parameters": {},
       "id": "7c1f6a2e-0002-4a11-9c01-000000000002",
-      "name": "Your work goes here",
+      "name": "Your Work Goes Here",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [60, 0]
@@ -34,31 +59,31 @@
         }
       },
       "id": "7c1f6a2e-0003-4a11-9c01-000000000003",
-      "name": "Tell Silent Fail it finished",
+      "name": "Ping Silent Fail",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [300, 0],
       "notesInFlow": true,
-      "notes": "Replace the URL with your own monitor ping URL from silentfailapp.com"
+      "notes": "Replace the token in this URL with your own monitor ping URL"
     }
   ],
   "connections": {
-    "Every hour": {
+    "When Every Hour Passes": {
       "main": [
         [
           {
-            "node": "Your work goes here",
+            "node": "Your Work Goes Here",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Your work goes here": {
+    "Your Work Goes Here": {
       "main": [
         [
           {
-            "node": "Tell Silent Fail it finished",
+            "node": "Ping Silent Fail",
             "type": "main",
             "index": 0
           }
