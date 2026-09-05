@@ -23,11 +23,22 @@ Self hosted n8n only. n8n Cloud allows verified nodes only.
 ## Use it
 
 1. Create a monitor at [silentfailapp.com](https://silentfailapp.com) and copy its ping URL.
-2. Add the **Silent Fail** node as the last step of the workflow you want watched.
+2. Add the **Silent Fail** node as the last step of the workflow you want watched, and pick the **Ping a monitor** action.
 3. Paste the ping URL, or save it as a **Silent Fail Monitor** credential and select that instead.
 4. Activate the workflow.
 
 That is the whole setup. There is no API key and no OAuth, because the unguessable token inside the ping URL is the only secret Silent Fail uses.
+
+### Operations
+
+The node has one resource, **Monitor**, with two operations.
+
+| Operation | Action | What it does |
+| --- | --- | --- |
+| Ping | Ping a monitor | Records a check-in. This is the one you want at the end of a workflow: if the pings stop arriving, Silent Fail emails you. |
+| Get Status | Get a monitor status | Reads whether the monitor exists and is being watched. It records nothing and changes nothing, so asking never marks a dead workflow as alive. |
+
+Get Status is useful when a workflow needs to know its own monitoring is set up, or when you want a health check that does not itself count as a check-in.
 
 ### Ping URL or credential
 
@@ -37,15 +48,17 @@ A URL typed into the node field travels inside the exported workflow JSON. Since
 
 The credential is called **Silent Fail Monitor API** and holds one field, the ping URL. There is no API key to find, because there is no API key. Its Test button checks that the monitor exists without pinging it, so testing a credential never tells Silent Fail your workflow ran.
 
-### Options
+### Method and options
 
-**Method.** GET or POST. Silent Fail treats them identically. GET is the simpler default. Use POST if something between you and us blocks or caches GET requests.
+**Method.** On Ping only. GET or POST, and Silent Fail treats them identically. GET is the simpler default. Use POST if something between you and us blocks or caches GET requests.
 
 **Timeout.** How long to wait before giving up. The endpoint answers in well under a second, so this only matters on a bad connection.
 
-**Ignore ping failures.** Off by default, which means a failed ping fails the run. That is louder, and it tells you the monitoring itself is broken rather than hiding it. Turn it on if the work the workflow does matters more than the monitoring of it.
+**Ignore failures.** Off by default, which means a failed request fails the run. That is louder, and it tells you the monitoring itself is broken rather than hiding it. Turn it on if the work the workflow does matters more than the monitoring of it.
 
 ## What the node returns
+
+Ping:
 
 ```json
 {
@@ -58,6 +71,17 @@ The credential is called **Silent Fail Monitor API** and holds one field, the pi
 ```
 
 `recovered` is true when this particular ping closed an outage, so a workflow can react to its own recovery if it wants to.
+
+Get Status:
+
+```json
+{
+  "monitor": "Nightly invoice sync",
+  "watching": true
+}
+```
+
+`watching` is false when the monitor still accepts pings but nobody is being alerted, so "the URL works" and "you would be told if it stopped" stay separate questions.
 
 ## Choosing a schedule and a grace period
 
